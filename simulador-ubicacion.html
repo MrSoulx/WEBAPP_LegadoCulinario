@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simulador de Ubicación - Legado Culinario</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+      min-height: 100vh;
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      padding: 40px 20px;
+    }
+    .container { max-width: 820px; width: 100%; }
+
+    h1 {
+      text-align: center;
+      font-size: 28px;
+      font-weight: 800;
+      margin-bottom: 6px;
+    }
+    .subtitle {
+      text-align: center;
+      color: rgba(255,255,255,0.6);
+      font-size: 14px;
+      margin-bottom: 32px;
+    }
+    .subtitle a { color: #FF9800; }
+
+    .card {
+      background: rgba(255,255,255,0.07);
+      backdrop-filter: blur(12px);
+      border-radius: 20px;
+      padding: 24px 28px;
+      margin-bottom: 20px;
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .toggle-info { display: flex; align-items: center; gap: 14px; }
+    .toggle-info .icon { font-size: 28px; }
+    .toggle-info strong { display: block; font-size: 16px; margin-bottom: 3px; }
+    .toggle-info p { font-size: 13px; color: rgba(255,255,255,0.5); margin: 0; }
+
+    .switch { position: relative; display: inline-block; width: 52px; height: 28px; flex-shrink: 0; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider {
+      position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(255,255,255,0.2); border-radius: 28px; transition: 0.3s;
+    }
+    .slider::before {
+      content: ''; position: absolute; height: 22px; width: 22px;
+      left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: 0.3s;
+    }
+    .switch input:checked + .slider { background: #FF9800; }
+    .switch input:checked + .slider::before { transform: translateX(24px); }
+
+    .status-row {
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    }
+    .status-label { font-size: 13px; color: rgba(255,255,255,0.5); font-weight: 600; }
+    .status-value { font-size: 20px; font-weight: 700; }
+    .detect-btn {
+      padding: 10px 20px; border: none; border-radius: 10px; font-size: 13px;
+      font-weight: 600; background: rgba(255,152,0,0.15); color: #FF9800;
+      cursor: pointer; transition: 0.2s; white-space: nowrap;
+    }
+    .detect-btn:hover { background: rgba(255,152,0,0.25); }
+    .detect-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .badge-detect {
+      display: inline-block; font-size: 12px; padding: 6px 14px;
+      border-radius: 20px; background: rgba(76,175,80,0.15); color: #66bb6a;
+      font-weight: 600;
+    }
+    .badge-sim {
+      display: inline-block; font-size: 12px; padding: 6px 14px;
+      border-radius: 20px; background: rgba(255,152,0,0.15); color: #FF9800;
+      font-weight: 600;
+    }
+
+    .section-title {
+      font-size: 15px; font-weight: 700; margin: 28px 0 16px;
+      text-align: center; color: rgba(255,255,255,0.7);
+    }
+
+    .region-title {
+      font-size: 11px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 1.5px; color: rgba(255,255,255,0.35);
+      margin: 0 0 10px; padding-left: 4px;
+    }
+    .region-group { margin-bottom: 24px; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 10px;
+    }
+    .country-btn {
+      display: flex; flex-direction: column; align-items: center; gap: 6px;
+      padding: 14px 10px; border: 2px solid transparent; border-radius: 14px;
+      cursor: pointer; font-size: 12px; font-weight: 600; color: #fff;
+      background: rgba(255,255,255,0.04); transition: all 0.2s; position: relative;
+    }
+    .country-btn:hover {
+      background: rgba(255,255,255,0.08);
+      transform: translateY(-2px);
+    }
+    .country-btn.active {
+      border-color: #FF9800;
+      background: rgba(255,152,0,0.12);
+      box-shadow: 0 0 20px rgba(255,152,0,0.15);
+    }
+    .country-btn img { border-radius: 4px; width: 40px; height: 30px; object-fit: cover; }
+    .country-btn .check {
+      position: absolute; top: 6px; right: 8px; font-size: 14px; color: #FF9800;
+    }
+
+    .toast {
+      position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+      padding: 14px 28px; border-radius: 12px; font-size: 14px; font-weight: 600;
+      background: #323232; color: #fff; box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+      opacity: 0; transition: opacity 0.3s; pointer-events: none;
+      text-align: center; max-width: 90vw;
+    }
+    .toast.show { opacity: 1; }
+
+      @media (max-width: 600px) {
+        .grid { grid-template-columns: repeat(2, 1fr); }
+        .status-row { flex-direction: column; text-align: center; }
+      }
+      .open-app-btn {
+        display: inline-block; margin-top: 8px;
+        padding: 10px 24px; border-radius: 12px;
+        background: linear-gradient(135deg, #FF9800, #F57C00);
+        color: #fff; font-weight: 700; font-size: 14px;
+        text-decoration: none; transition: 0.2s;
+      }
+      .open-app-btn:hover { transform: scale(1.04); box-shadow: 0 4px 20px rgba(255,152,0,0.3); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>📍 Simulador de Ubicación</h1>
+    <p class="subtitle">
+      Para <strong>Legado Culinario</strong> &mdash;
+      Cambiá el país y los sustitutos de ingredientes se adaptan automáticamente en la app pública.
+      <br><a class="open-app-btn" id="openAppLink" href="http://localhost:3000" target="_blank">🚀 Abrir app pública con este país</a>
+    </p>
+
+    <div class="card">
+      <div class="toggle-row">
+        <div class="toggle-info">
+          <span class="icon" id="toggleIcon">🌐</span>
+          <div>
+            <strong id="toggleLabel">Simulación activa</strong>
+            <p id="toggleDesc">Mostrando sustitutos para el país seleccionado</p>
+          </div>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="simToggle">
+          <span class="slider"></span>
+        </label>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="status-row">
+        <div>
+          <div class="status-label">País actual</div>
+          <div class="status-value" id="currentCountry">—</div>
+        </div>
+        <div>
+          <span class="badge-sim" id="modeBadge">🔄 Simulado</span>
+          <button class="detect-btn" id="detectBtn">🔄 Detectar real</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-title">🌎 Elegí un país para simular</div>
+    <div id="countriesContainer"></div>
+
+    <div class="toast" id="toast"></div>
+  </div>
+
+  <script>
+    const COUNTRIES = [
+      { code: 'US', name: 'Estados Unidos', flag: 'us', region: 'Norteamérica' },
+      { code: 'CA', name: 'Canadá', flag: 'ca', region: 'Norteamérica' },
+      { code: 'GB', name: 'Reino Unido', flag: 'gb', region: 'Europa' },
+      { code: 'ES', name: 'España', flag: 'es', region: 'Europa' },
+      { code: 'FR', name: 'Francia', flag: 'fr', region: 'Europa' },
+      { code: 'DE', name: 'Alemania', flag: 'de', region: 'Europa' },
+      { code: 'IT', name: 'Italia', flag: 'it', region: 'Europa' },
+      { code: 'CN', name: 'China', flag: 'cn', region: 'Asia' },
+      { code: 'JP', name: 'Japón', flag: 'jp', region: 'Asia' },
+      { code: 'MX', name: 'México', flag: 'mx', region: 'Latinoamérica' },
+      { code: 'AR', name: 'Argentina', flag: 'ar', region: 'Latinoamérica' },
+      { code: 'CO', name: 'Colombia', flag: 'co', region: 'Latinoamérica' },
+      { code: 'EC', name: 'Ecuador', flag: 'ec', region: 'Latinoamérica' },
+      { code: 'AU', name: 'Australia', flag: 'au', region: 'Oceanía' },
+    ];
+
+    const regions = [...new Set(COUNTRIES.map(c => c.region))];
+
+    // --- Leer localStorage ---
+    const ls = (k, def) => localStorage.getItem(k) ?? def;
+    const setLS = (k, v) => localStorage.setItem(k, v);
+
+    let simulatedCountry = ls('simulatedCountry', 'Estados Unidos');
+    let simulationEnabled = ls('simulationEnabled') !== 'false';
+
+    // --- Render ---
+    const simToggle = document.getElementById('simToggle');
+    const toggleIcon = document.getElementById('toggleIcon');
+    const toggleLabel = document.getElementById('toggleLabel');
+    const toggleDesc = document.getElementById('toggleDesc');
+    const currentCountry = document.getElementById('currentCountry');
+    const modeBadge = document.getElementById('modeBadge');
+    const container = document.getElementById('countriesContainer');
+    const toast = document.getElementById('toast');
+    const detectBtn = document.getElementById('detectBtn');
+    const openAppLink = document.getElementById('openAppLink');
+    let toastTimer;
+
+    function updateOpenAppLink() {
+      const params = new URLSearchParams({
+        country: simulatedCountry,
+        sim: simulationEnabled ? 'true' : 'false'
+      });
+      openAppLink.href = 'http://localhost:3000?' + params.toString();
+    }
+
+    function showToast(msg) {
+      clearTimeout(toastTimer);
+      toast.textContent = msg;
+      toast.classList.add('show');
+      toastTimer = setTimeout(() => toast.classList.remove('show'), 2500);
+    }
+
+    function updateUI() {
+      simToggle.checked = simulationEnabled;
+      if (simulationEnabled) {
+        toggleIcon.textContent = '🌐';
+        toggleLabel.textContent = 'Simulación activa';
+        toggleDesc.textContent = 'Mostrando sustitutos para el país seleccionado';
+        modeBadge.textContent = '🔄 Simulado';
+        modeBadge.className = 'badge-sim';
+        currentCountry.textContent = simulatedCountry;
+      } else {
+        toggleIcon.textContent = '📍';
+        toggleLabel.textContent = 'Ubicación real';
+        toggleDesc.textContent = 'Detectando tu ubicación automáticamente';
+        modeBadge.textContent = '📍 Real';
+        modeBadge.className = 'badge-detect';
+        currentCountry.textContent = simulatedCountry + ' (detectado)';
+      }
+      renderCountries();
+      updateOpenAppLink();
+    }
+
+    function renderCountries() {
+      container.innerHTML = '';
+      regions.forEach(region => {
+        const group = document.createElement('div');
+        group.className = 'region-group';
+
+        const title = document.createElement('div');
+        title.className = 'region-title';
+        title.textContent = region;
+        group.appendChild(title);
+
+        const grid = document.createElement('div');
+        grid.className = 'grid';
+
+        COUNTRIES.filter(c => c.region === region).forEach(c => {
+          const btn = document.createElement('button');
+          btn.className = 'country-btn' + (simulatedCountry === c.name ? ' active' : '');
+          btn.innerHTML = `
+            <img src="https://flagcdn.com/48x36/${c.flag}.png"
+                 srcset="https://flagcdn.com/96x72/${c.flag}.png 2x"
+                 alt="${c.name}" loading="lazy">
+            <span>${c.name}</span>
+            ${simulatedCountry === c.name ? '<span class="check">✓</span>' : ''}
+          `;
+          btn.addEventListener('click', () => {
+            if (!simulationEnabled) {
+              simToggle.checked = true;
+              simulationEnabled = true;
+              setLS('simulationEnabled', 'true');
+            }
+            simulatedCountry = c.name;
+            setLS('simulatedCountry', c.name);
+            updateUI();
+            showToast('📍 Simulando ubicación en ' + c.name);
+          });
+          grid.appendChild(btn);
+        });
+
+        group.appendChild(grid);
+        container.appendChild(group);
+      });
+    }
+
+    // --- Toggle ---
+    simToggle.addEventListener('change', function () {
+      simulationEnabled = this.checked;
+      setLS('simulationEnabled', simulationEnabled ? 'true' : 'false');
+      if (simulationEnabled) {
+        simulatedCountry = ls('simulatedCountry', 'Estados Unidos');
+      } else {
+        detectRealLocation();
+      }
+      updateUI();
+      showToast(simulationEnabled ? '🌐 Simulación activada' : '📍 Usando ubicación real');
+    });
+
+    // --- Detectar ubicación real ---
+    async function detectRealLocation() {
+      detectBtn.disabled = true;
+      detectBtn.textContent = '🔄 Detectando...';
+      try {
+        const res = await fetch('http://localhost:5000/api/geoip');
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+        if (data.success && data.country) {
+          simulatedCountry = data.country;
+          setLS('simulatedCountry', data.country);
+          updateUI();
+          showToast('📍 Detectado: ' + data.country);
+        } else {
+          showToast('⚠️ No se pudo detectar el país');
+        }
+      } catch (e) {
+        console.error(e);
+        showToast('⚠️ Error al detectar ubicación. Probá con otro país manualmente.');
+      } finally {
+        detectBtn.disabled = false;
+        detectBtn.textContent = '🔄 Detectar real';
+      }
+    }
+
+    detectBtn.addEventListener('click', detectRealLocation);
+
+    // --- Inicializar ---
+    if (!simulationEnabled) detectRealLocation();
+    updateUI();
+  </script>
+</body>
+</html>

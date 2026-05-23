@@ -1,0 +1,15 @@
+{
+  "short_name": "Legado Culinario",
+  "name": "Legado Culinario Ecuador",
+  "icons": [
+    {
+      "src": "logo-img/Logo-Legado_Culinario-removebg-preview.png",
+      "sizes": "192x192 512x512",
+      "type": "image/png"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#0a0e1a",
+  "background_color": "#0a0e1a"
+}

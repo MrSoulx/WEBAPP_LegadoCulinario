@@ -1,0 +1,149 @@
+.dashboard {
+  max-width: 1200px;
+}
+
+.dashboard-title {
+  font-size: 28px;
+  font-weight: 600;
+  margin-bottom: 30px;
+  color: var(--texto-oscuro);
+}
+
+.dashboard-loading {
+  text-align: center;
+  padding: 60px 20px;
+  font-size: 18px;
+  color: var(--texto-secundario);
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  margin-bottom: 40px;
+}
+
+.stat-card {
+  background: var(--blanco);
+  border-radius: var(--border-radius);
+  padding: 24px;
+  box-shadow: var(--sombra-card);
+  text-align: center;
+}
+
+.stat-label {
+  font-size: 14px;
+  color: var(--texto-secundario);
+  margin-bottom: 12px;
+}
+
+.stat-value {
+  font-size: 36px;
+  font-weight: 700;
+  color: var(--texto-oscuro);
+}
+
+.stat-value-small {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--texto-oscuro);
+}
+
+.chart-section {
+  background: var(--blanco);
+  border-radius: var(--border-radius);
+  padding: 30px;
+  box-shadow: var(--sombra-card);
+  margin-bottom: 30px;
+}
+
+.chart-section h2 {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  color: var(--texto-oscuro);
+}
+
+.chart-placeholder {
+  height: 200px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.chart-line {
+  width: 100%;
+  max-width: 600px;
+  height: 150px;
+}
+
+.chart-container-wrapper {
+  display: flex;
+  gap: 30px;
+  height: 400px;
+}
+
+.chart-canvas-container {
+  flex: 1;
+}
+
+.chart-legend-container {
+  width: 120px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.chart-labels {
+  display: flex;
+  justify-content: space-around;
+  width: 100%;
+  max-width: 600px;
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--texto-secundario);
+}
+
+.action-buttons {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.action-buttons .btn {
+  flex: 1;
+  min-width: 150px;
+}
+
+@media (max-width: 768px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .chart-container-wrapper {
+    flex-direction: column !important;
+    height: auto !important;
+  }
+
+  .chart-canvas-container {
+    height: 300px !important;
+    margin-bottom: 25px;
+  }
+
+  .chart-legend-container {
+    width: 100% !important;
+    flex-direction: row !important;
+    flex-wrap: wrap;
+    justify-content: center !important;
+    gap: 15px !important;
+  }
+
+  .action-buttons {
+    flex-direction: column;
+  }
+  
+  .action-buttons .btn {
+    width: 100%;
+  }
+}

@@ -1,0 +1,139 @@
+/* Estilos Personalizados del Selector de Idioma */
+
+.language-selector-custom {
+  position: relative;
+  z-index: 100;
+}
+
+/* Botón del Idioma Actual */
+.lang-current {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  background: var(--bg-secondary);
+  border: 2px solid var(--glass-border-current);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  min-width: 160px;
+  font-family: var(--font-family);
+}
+
+.lang-current:hover {
+  border-color: var(--color-costa);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px var(--color-costa-glow);
+}
+
+.lang-logo-mini {
+  height: 20px;
+  width: auto;
+  object-fit: contain;
+}
+
+.lang-flag-img {
+  border-radius: 2px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.lang-name {
+  flex: 1;
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  color: var(--text-primary);
+  text-align: left;
+}
+
+.lang-arrow {
+  font-size: var(--font-size-xs);
+  color: var(--text-tertiary);
+  transition: transform var(--transition-fast);
+}
+
+/* Menú Desplegable (Dropdown) */
+.lang-dropdown {
+  position: absolute;
+  top: calc(100% + var(--space-xs));
+  right: 0;
+  min-width: 200px;
+  max-height: 400px;
+  overflow-y: auto;
+  background: var(--bg-secondary);
+  border: 2px solid var(--glass-border-current);
+  border-radius: var(--radius-md);
+  padding: var(--space-xs);
+  animation: fadeIn 0.2s ease-out;
+  box-shadow: var(--shadow-xl);
+}
+
+.lang-option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  width: 100%;
+  padding: var(--space-sm) var(--space-md);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  font-family: var(--font-family);
+  text-align: left;
+}
+
+.lang-option:hover {
+  background: var(--bg-tertiary);
+  transform: translateX(4px);
+}
+
+.lang-option.active {
+  background: linear-gradient(135deg, rgba(0, 212, 255, 0.1), transparent);
+  border-left: 3px solid var(--color-costa);
+}
+
+.lang-check {
+  margin-left: auto;
+  color: var(--color-costa);
+  font-weight: bold;
+}
+
+/* Barra de Desplazamiento Personalizada para el Dropdown */
+.lang-dropdown::-webkit-scrollbar {
+  width: 6px;
+}
+
+.lang-dropdown::-webkit-scrollbar-track {
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-full);
+}
+
+.lang-dropdown::-webkit-scrollbar-thumb {
+  background: var(--color-costa);
+  border-radius: var(--radius-full);
+}
+
+/* Estilos Responsivos */
+@media (max-width: 768px) {
+  .lang-current {
+    min-width: 120px;
+    padding: var(--space-xs) var(--space-sm);
+  }
+
+  .lang-name {
+    font-size: var(--font-size-sm);
+  }
+
+  .lang-flag {
+    font-size: var(--font-size-lg);
+  }
+}
+
+@media (max-width: 480px) {
+  .lang-dropdown {
+    right: auto;
+    left: 0;
+    width: 100%;
+    max-width: 280px;
+  }
+}

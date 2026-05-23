@@ -1,0 +1,255 @@
+/* Estilos de la Página de Recetas */
+
+.recipes-page {
+  padding: var(--space-md) var(--space-md);
+  min-height: 100vh;
+}
+
+.recipes-header {
+  text-align: center;
+  margin-bottom: var(--space-md);
+}
+
+/* Barra de Búsqueda */
+.search-bar {
+  max-width: 1000px;
+  margin: 0 auto var(--space-md);
+  padding: var(--space-md);
+}
+
+.search-input-wrapper {
+  position: relative;
+  margin-bottom: var(--space-sm);
+}
+
+.search-input-wrapper {
+  position: relative;
+  margin-bottom: var(--space-md);
+}
+
+.search-input {
+  width: 100%;
+  padding: var(--space-md) var(--space-lg);
+  padding-right: 60px;
+  background: var(--bg-secondary);
+  border: 2px solid var(--glass-border-current);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-lg);
+  color: var(--text-primary);
+  font-family: var(--font-family);
+  transition: all var(--transition-fast);
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--color-costa);
+  box-shadow: 0 0 20px var(--color-costa-glow);
+}
+
+.search-icon {
+  position: absolute;
+  right: var(--space-lg);
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: var(--font-size-xl);
+  pointer-events: none;
+}
+
+/* Botones de Filtro */
+.filter-buttons {
+  display: flex;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.filter-btn {
+  padding: var(--space-sm) var(--space-lg);
+  background: var(--bg-secondary);
+  border: 2px solid var(--glass-border-current);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.filter-btn:hover {
+  transform: translateY(-2px);
+}
+
+.filter-btn.active {
+  transform: scale(1.05);
+}
+
+/* Resultados */
+.recipes-results {
+  max-width: 1600px; /* Aumentado de 1400px para aprovechar más espacio */
+  margin: 0 auto;
+  padding: 0 var(--space-lg); /* Añadido padding lateral */
+}
+
+.results-count {
+  text-align: center;
+  font-size: var(--font-size-md);
+  color: var(--text-secondary);
+  margin-bottom: var(--space-lg);
+}
+
+.no-results {
+  text-align: center;
+  padding: var(--space-2xl);
+  max-width: 600px;
+  margin: var(--space-xl) auto;
+}
+
+.no-results h3 {
+  font-size: var(--font-size-2xl);
+  margin-bottom: var(--space-md);
+}
+
+.no-results p {
+  color: var(--text-secondary);
+  font-size: var(--font-size-md);
+}
+
+/* Filtros de Provincia (Grid System) */
+.province-filters-row {
+  margin-top: var(--space-md);
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--border-color);
+  width: 100%;
+}
+
+.province-filter-header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: var(--space-md);
+  margin-bottom: var(--space-md);
+}
+
+.province-filter-label {
+  margin: 0; /* Remove bottom margin as flex handles gap */
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.province-chip-all {
+  background: white;
+  border: 1px solid var(--primary-color);
+  color: var(--primary-color);
+  padding: 8px 16px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 0.9em;
+  font-weight: 600;
+  transition: all 0.2s;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.province-chip-all:hover {
+  background: var(--bg-tertiary);
+}
+
+.province-chip-all.active {
+  background: var(--primary-color);
+  color: white;
+}
+
+.provinces-list {
+  display: grid;
+  grid-template-columns: repeat(
+    auto-fill,
+    minmax(190px, 1fr)
+  ); /* Un poco más ancho para nombres largos */
+  gap: 16px; /* Más espacio entre items */
+  width: 100%;
+  justify-items: center; /* Centrar items en su celda si sobra espacio */
+}
+
+.province-chip {
+  width: 100%;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 8px;
+  background: white; /* Forzar fondo blanco */
+  border: 1px solid #e0e0e0; /* Borde visible gris claro */
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9em;
+  color: #333; /* Forzar texto oscuro */
+  transition: all 0.2s ease;
+  font-weight: 500;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  height: 100%; /* Llenar altura de celda */
+}
+
+.province-chip:hover {
+  background: var(--bg-tertiary);
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.province-chip.active {
+  background: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+  box-shadow: 0 4px 10px rgba(var(--primary-color-rgb), 0.3);
+}
+
+.province-chip.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  background: #f9f9f9;
+  color: #ccc;
+  box-shadow: none;
+  border-color: #eee;
+}
+
+.province-chip.disabled:hover {
+  transform: none;
+  background: #f9f9f9;
+}
+
+/* Estilos Responsivos */
+@media (max-width: 768px) {
+  .search-input {
+    font-size: var(--font-size-md);
+  }
+
+  .filter-buttons {
+    gap: var(--space-xs);
+  }
+
+  .filter-btn {
+    padding: var(--space-xs) var(--space-md);
+    font-size: var(--font-size-sm);
+  }
+
+  .provinces-list {
+    grid-template-columns: repeat(
+      auto-fill,
+      minmax(140px, 1fr)
+    ); /* Más pequeño en móvil */
+  }
+}
+
+@media (max-width: 480px) {
+  .filter-buttons {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .filter-btn {
+    width: 100%;
+  }
+}

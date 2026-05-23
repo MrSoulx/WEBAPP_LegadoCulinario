@@ -1,0 +1,120 @@
+.login-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background-color: var(--fondo-claro);
+  padding: 20px;
+}
+
+
+.login-card {
+  background: var(--blanco);
+  border-radius: var(--border-radius);
+  box-shadow: var(--sombra-card);
+  padding: 40px;
+  padding-top: 60px; /* Espacio extra arriba para compensar el logo */
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+  position: relative; /* Para posicionar elementos */
+  overflow: visible; /* Permitir que el logo salga */
+  margin-top: 60px; /* Bajar la tarjeta para que quepa el logo */
+}
+
+.login-logo {
+  margin-bottom: 24px;
+  /* Posicionamiento para sacar el logo */
+  position: absolute;
+  top: -60px; /* Mitad afuera */
+  left: 0;
+  right: 0;
+  margin: 0 auto;
+  width: 120px; /* Mismo ancho que la imagen */
+}
+
+.login-logo img {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%; /* Circular */
+  object-fit: cover;
+  background: white; /* Borde blanco falso */
+  padding: 5px; /* Grosor del borde */
+  box-shadow: 0 -10px 20px rgba(0,0,0,0.05), 0 10px 20px rgba(0,0,0,0.1); /* Sombra flotante */
+}
+
+.login-card.shake-card {
+  animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+}
+
+
+.login-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--texto-oscuro);
+  margin-bottom: 8px;
+}
+
+.login-subtitle {
+  font-size: 18px;
+  font-weight: 400;
+  color: var(--texto-secundario);
+  margin-bottom: 32px;
+}
+
+.login-error {
+  background-color: #fee2e2;
+  color: #dc2626;
+  padding: 14px;
+  border-radius: 12px;
+  margin-bottom: 24px;
+  font-size: 14px;
+  font-weight: 600;
+  border: 1px solid #fecaca;
+  animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+}
+
+@keyframes shake {
+  10%, 90% { transform: translate3d(-1px, 0, 0); }
+  20%, 80% { transform: translate3d(2px, 0, 0); }
+  30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+  40%, 60% { transform: translate3d(4px, 0, 0); }
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.form-group {
+  text-align: left;
+}
+
+.form-group input {
+  width: 100%;
+}
+
+.login-footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: var(--naranja-accion);
+  color: white;
+  text-align: center;
+  padding: 12px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+@media (max-width: 480px) {
+  .login-card {
+    padding: 30px 20px;
+  }
+  
+  .login-logo img {
+    width: 100px;
+  }
+}

@@ -1,0 +1,244 @@
+/* Estilos del Mapa - Título Naranja y Legible */
+
+.ecuador-map-container {
+  width: 100%;
+  max-width: 1050px;
+  margin: 0 auto;
+  text-align: center;
+  padding: 2.5rem 0;
+  /* Antique Map Background */
+  /* Antique Map Background & Frame */
+  background-image: url('../../assets/istockphoto-1383658060-612x612.jpg');
+  background-size: cover;
+  background-position: center;
+  
+  /* Complex Vintage Decorative Frame */
+  border: 12px solid transparent;
+  
+  /* Simulate decorative border pattern */
+  /* Simulate decorative border pattern and fix background artifacts */
+  background-clip: padding-box, padding-box, border-box;
+  background-origin: padding-box, padding-box, border-box;
+  background-image: 
+    /* 1. Parchment Overlay (hides pixelation) */
+    linear-gradient(rgba(244, 228, 188, 0.9), rgba(244, 228, 188, 0.9)),
+    /* 2. The map background texture */
+    url('../../assets/istockphoto-1383658060-612x612.jpg'),
+    /* 3. The decorative border gradient */
+    linear-gradient(to right, #8B4513, #CD853F, #8B4513); /* Wood/Gold Frame */
+    
+  /* External shadow for lifting off the page */
+  box-shadow: 
+    0 10px 30px rgba(0,0,0,0.4),
+    inset 0 0 60px rgba(85, 40, 0, 0.3); /* Inner vignetting */
+
+  /* Double border effect using box-shadow on the element */
+  outline: 2px solid #5a2e0c;
+  outline-offset: -16px; 
+
+  position: relative;
+  z-index: 1;
+  margin: 1rem auto;
+  border-radius: 4px; /* Slightly rounded outer frame */
+  overflow: hidden; /* Evitar desbordes en móvil */
+  /* Add corner ornaments using pseudo-elements if possible, or keep simple for now */
+}
+.ecuador-map-container::after {
+  content: "";
+  position: absolute;
+  top: 6px; left: 6px; right: 6px; bottom: 6px;
+  border: 1px solid rgba(139, 69, 19, 0.4);
+  pointer-events: none;
+}
+
+.map-title {
+  font-size: 3.8rem; /* Un poco más grande para legibilidad */
+  color: #FF8C00; /* Naranja Oscuro Vibrante (DarkOrange) para máximo contraste */
+  font-weight: 900;
+  /* Sombra sólida simple, sin neón */
+  text-shadow: 2px 2px 0px rgba(0,0,0,0.5);
+  margin-bottom: 2rem;
+  letter-spacing: -1px;
+}
+
+.ecuador-map-perspective-wrapper {
+  perspective: 2500px;
+  filter: saturate(1.3) contrast(1.05);
+}
+
+.ecuador-map-svg-container {
+  transform: rotateX(25deg) rotateY(-5deg); 
+  transition: transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+  transform-style: preserve-3d;
+}
+
+.ecuador-map-svg {
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.region-group {
+  cursor: pointer;
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* ESTADO ACTIVO (Hover/Selected) */
+.region-group.hovered {
+  transform: translateY(-20px);
+  filter: drop-shadow(0 20px 25px rgba(0, 0, 0, 0.4)) brightness(1.1);
+}
+
+/* Región seleccionada: se mantiene plana (sin elevación) */
+.region-group.selected {
+  transform: translateY(0);
+  filter: brightness(1.05);
+}
+
+/* Grupo de provincia con cursor pointer cuando la región está seleccionada */
+.region-group.selected .province-group {
+  cursor: pointer;
+}
+
+/* Z-index para provincias */
+.province-group {
+  isolation: isolate;
+}
+
+/* Provincia con hover debe estar al frente */
+.province-group.province-hovered {
+  z-index: 1000 !important;
+  position: relative;
+}
+
+.top-face {
+  transition: filter 0.3s ease;
+}
+
+.map-base-floor {
+  pointer-events: none;
+}
+
+/* ETIQUETAS DE REGIONES */
+.region-label {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 900;
+  font-size: 26px; /* Ajustado de 30px a 26px para un tamaño medio */
+  fill: #fff;
+  stroke: #000;
+  stroke-width: 1.2px; /* Ligeramente más fino para mayor elegancia */
+  stroke-linejoin: round;
+  paint-order: stroke fill;
+  text-anchor: middle;
+  pointer-events: none;
+  /* Sombra sutil para despegar del fondo */
+  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  transform-origin: center; 
+  transition: transform 0.3s ease;
+}
+
+.region-group.hovered .region-label {
+  transform: translateY(-30px) scale(1.1);
+}
+
+.region-group.selected .region-label {
+  transform: translateY(0) scale(1.15);
+  font-weight: 950;
+  /* Ocultar etiqueta de región cuando está seleccionada */
+  opacity: 0;
+  pointer-events: none;
+}
+
+.region-group.dimmed {
+  opacity: 0.4;
+  filter: grayscale(0.5);
+}
+
+/* ETIQUETAS DE PROVINCIAS */
+.province-label {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 700;
+  fill: #fff;
+  stroke: #000;
+  stroke-width: 1px;
+  stroke-linejoin: round;
+  paint-order: stroke fill;
+  text-anchor: middle;
+  pointer-events: none;
+  font-size: 14px; /* Tamaño base mediano y consistente */
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+/* Mostrar etiquetas de provincias solo cuando la región está seleccionada */
+.region-group.selected .province-label {
+  opacity: 0.95;
+}
+
+/* ==========================================================================
+   DISEÑO RESPONSIVO (Responsive Design)
+   ========================================================================== */
+
+/* Tablet & Laptops pequeños (max-width: 1024px) */
+@media (max-width: 1024px) {
+  .ecuador-map-container {
+    max-width: 95%;
+    padding: 2rem 0;
+  }
+
+  .map-title {
+    font-size: 3rem;
+  }
+}
+
+/* Mobile Devices (Tablets pequeñas y teléfonos grandes - max-width: 768px) */
+@media (max-width: 768px) {
+  .ecuador-map-container {
+    padding: 1rem 0;
+    max-width: 100%;
+    margin-top: 0.5rem;
+    border-width: 6px; /* Marco más fino */
+  }
+
+  .map-title {
+    font-size: 2.2rem;
+    margin-bottom: 1rem;
+    padding: 0 10px;
+  }
+
+  /* Ajustar etiquetas de región para que no se solapen */
+  .region-label {
+    font-size: 22px;
+  }
+
+  
+  /* Ajustar perspectiva para pantallas pequeñas */
+  .ecuador-map-svg-container {
+     transform: rotateX(20deg) rotateY(-2deg) scale(0.95);
+  }
+}
+
+/* Small Mobile (Teléfonos - max-width: 480px) */
+@media (max-width: 480px) {
+  .ecuador-map-container {
+    padding: 0.5rem 0;
+    margin: 0 auto 1.5rem auto;
+    border-width: 4px; /* Marco aún más fino */
+    outline-offset: -8px;
+    outline-width: 2px;
+  }
+
+  .map-title {
+    font-size: 1.8rem;
+    text-shadow: 1px 1px 0px rgba(0,0,0,0.5); /* Sombra más sutil */
+  }
+
+  .region-label {
+    font-size: 18px;
+  }
+  
+  /* Reducir efecto 3D agresivo en móviles para ganar espacio */
+  .ecuador-map-svg-container {
+     transform: rotateX(15deg) rotateY(0deg) scale(1);
+  }
+}

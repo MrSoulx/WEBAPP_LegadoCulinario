@@ -1,0 +1,132 @@
+.country-selector {
+  position: relative;
+  display: inline-block;
+}
+
+.country-current {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-color);
+  background: var(--card-bg);
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.country-current:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.country-flag-img {
+  border-radius: 2px;
+  object-fit: cover;
+}
+
+.country-name {
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.country-arrow {
+  font-size: 10px;
+  opacity: 0.6;
+}
+
+.country-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 220px;
+  max-height: 350px;
+  overflow-y: auto;
+  border-radius: 14px;
+  padding: 8px;
+  z-index: 1000;
+  background: var(--card-bg);
+  box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+  animation: dropdownFadeIn 0.15s ease;
+}
+
+.country-dropdown-header {
+  padding: 8px 12px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  opacity: 0.5;
+  border-bottom: 1px solid rgba(128,128,128,0.15);
+  margin-bottom: 4px;
+}
+
+.country-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-color);
+  background: transparent;
+  transition: all 0.15s;
+  text-align: left;
+}
+
+.country-option:hover {
+  background: rgba(128,128,128,0.08);
+}
+
+.country-option.active {
+  background: rgba(255, 152, 0, 0.12);
+  font-weight: 600;
+}
+
+.country-check {
+  margin-left: auto;
+  color: #FF9800;
+  font-size: 14px;
+}
+
+@keyframes dropdownFadeIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Dark mode support */
+.dark-theme .country-current {
+  background: rgba(255,255,255,0.08);
+  color: #fff;
+}
+
+.dark-theme .country-dropdown {
+  background: #1e1e1e;
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+.dark-theme .country-option:hover {
+  background: rgba(255,255,255,0.06);
+}
+
+.dark-theme .country-option.active {
+  background: rgba(255, 152, 0, 0.2);
+}
+
+/* Scrollbar */
+.country-dropdown::-webkit-scrollbar {
+  width: 4px;
+}
+.country-dropdown::-webkit-scrollbar-thumb {
+  background: rgba(128,128,128,0.3);
+  border-radius: 4px;
+}

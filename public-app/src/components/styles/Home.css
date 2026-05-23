@@ -1,0 +1,107 @@
+/* Estilos de la Página de Inicio */
+
+.home-page {
+  min-height: 100vh;
+}
+
+/* Sección del Mapa */
+.map-section {
+  padding: 8px var(--space-lg);
+}
+
+.section-title {
+  text-align: center;
+  font-size: var(--font-size-4xl);
+  margin-bottom: 8px;
+  background: var(--gradient-sierra);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Navegación Breadcrumb (Migas de Pan) */
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-bottom: 6px;
+  flex-wrap: wrap;
+}
+
+.breadcrumb-btn {
+  background: transparent;
+  border: none;
+  color: var(--color-costa);
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-family);
+}
+
+.breadcrumb-btn:hover {
+  background: var(--bg-tertiary);
+  transform: translateX(-2px);
+}
+
+/* Mensaje de "No hay recetas" */
+.no-recipes-message {
+  text-align: center;
+  padding: var(--space-2xl);
+  max-width: 600px;
+  margin: var(--space-xl) auto;
+}
+
+.no-recipes-message h3 {
+  font-size: var(--font-size-2xl);
+  margin-bottom: var(--space-md);
+}
+
+.no-recipes-message p {
+  color: var(--text-secondary);
+  font-size: var(--font-size-lg);
+  margin-bottom: var(--space-xl);
+}
+
+/* Sección CTA (Llamada a la Acción) */
+.cta-section {
+  max-width: 800px;
+  margin: var(--space-2xl) auto;
+  padding: var(--space-2xl);
+  text-align: center;
+}
+
+.cta-section h2 {
+  font-size: var(--font-size-3xl);
+  margin-bottom: var(--space-md);
+}
+
+.cta-section p {
+  font-size: var(--font-size-lg);
+  color: var(--text-secondary);
+  margin-bottom: var(--space-xl);
+}
+
+/* Estilos Responsivos */
+@media (max-width: 768px) {
+  .section-title {
+    font-size: var(--font-size-3xl);
+  }
+}
+
+@media (max-width: 480px) {
+  .breadcrumb {
+    font-size: var(--font-size-sm);
+  }
+}
+
+/* Vista de Detalle de Región (Popup) */
+.region-detail-view {
+  padding: var(--space-2xl) var(--space-lg);
+  min-height: 60vh;
+  animation: fadeIn 0.5s ease-out;
+}
+
+

@@ -1,0 +1,70 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: legado-culinario-backend
+    ports:
+      - "5001:5000"
+    env_file:
+      - ./backend/.env
+    environment:
+      - NODE_ENV=production
+      - PORT=5000
+    volumes:
+      - uploads:/app/uploads
+    restart: unless-stopped
+    networks:
+      - legado-network
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:5000/api/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+
+  public-app:
+    build:
+      context: ./public-app
+      dockerfile: Dockerfile
+    container_name: legado-culinario-public
+    ports:
+      - "3001:3000"
+    environment:
+      - REACT_APP_API_URL=http://localhost:5001/api
+      - BROWSER=none
+      - WDS_SOCKET_PORT=3001
+    depends_on:
+      - backend
+    stdin_open: true
+    tty: true
+    restart: unless-stopped
+    networks:
+      - legado-network
+
+  admin-panel:
+    build:
+      context: ./admin-panel
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: http://localhost:5001/api
+        VITE_SUPABASE_URL: https://daxqrlguoghxjncznoxy.supabase.co
+        VITE_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRheHFybGd1b2doeGpuY3pub3h5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1MDU3OTQsImV4cCI6MjA5NTA4MTc5NH0.bFW9I_u56GtpdKFDIQ2f7ARBzyBcihq38gV6kqVjwxE
+    container_name: legado-culinario-admin
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - legado-network
+
+volumes:
+  uploads:
+    driver: local
+
+networks:
+  legado-network:
+    driver: bridge
