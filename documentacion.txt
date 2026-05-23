@@ -1,0 +1,713 @@
+============================================================================
+                     DOCUMENTACIÓN TÉCNICA - LEGADO CULINARIO
+============================================================================
+
+ÍNDICE
+  1. Descripción General
+  2. Tecnologías Utilizadas
+  3. Arquitectura del Sistema
+  4. Estructura del Proyecto
+  5. Endpoints de la API
+  6. Base de Datos (Supabase / PostgreSQL)
+  7. Sistema de Sustitución de Ingredientes (IA)
+  8. Simulador de Ubicación
+  9. Almacenamiento (Cloudflare R2)
+  10. Autenticación
+  11. Internacionalización (i18n)
+  12. Despliegue
+  13. Variables de Entorno
+  14. Flujo de Datos
+
+
+============================================================================
+1. DESCRIPCIÓN GENERAL
+============================================================================
+
+Legado Culinario es una plataforma web para descubrir y compartir recetas
+tradicionales ecuatorianas organizadas por regiones (Costa, Sierra, Oriente,
+Insular). Su funcionalidad principal es la sustitución inteligente de
+ingredientes: cuando un usuario desde cualquier país abre una receta, la
+aplicación utiliza inteligencia artificial (Groq / Llama 3.3 70B) para
+sugerir alternativas locales a los ingredientes ecuatorianos que son
+difíciles de conseguir en su país.
+
+La plataforma consta de tres aplicaciones independientes:
+  - Backend (API REST)
+  - Public App (catálogo de recetas para visitantes)
+  - Admin Panel (gestión de recetas, dashboard, feedback)
+
+Además, incluye una herramienta standalone para simular ubicación geográfica
+y probar la funcionalidad de sustitutos sin cambiar de país realmente.
+
+
+============================================================================
+2. TECNOLOGÍAS UTILIZADAS
+============================================================================
+
+BACKEND
+  - Node.js (v18+) con Express 5
+  - Supabase (PostgreSQL) como base de datos principal
+  - Supabase Auth para autenticación de usuarios
+  - Groq API (Llama 3.3 70B) para inteligencia artificial
+  - Cloudflare R2 (S3-compatible) para almacenamiento de archivos
+  - @aws-sdk/client-s3 y @aws-sdk/s3-request-presigner
+  - node-fetch para peticiones HTTP internas
+  - multer para subida de archivos multipart
+  - helmet, cors, morgan para seguridad y logging
+  - winston como logger estructurado
+  - nodemailer para envío de correos electrónicos
+  - express-rate-limit para protección contra abuso
+  - joi para validación de esquemas
+
+PUBLIC APP
+  - React 19 con react-scripts (Create React App-like)
+  - i18next + react-i18next para internacionalización español/inglés
+  - i18next-browser-languagedetector para detección automática de idioma
+  - Webpack (integrado en react-scripts)
+
+ADMIN PANEL
+  - React 19 con Vite
+  - react-router-dom v7 para enrutamiento
+  - @supabase/supabase-js para autenticación directa
+  - axios para peticiones HTTP
+  - chart.js + react-chartjs-2 para gráficos del dashboard
+  - react-hot-toast para notificaciones
+
+HERRAMIENTAS DE INFRAESTRUCTURA
+  - Docker + Docker Compose
+  - Vercel (opcional para despliegue serverless)
+  - Git + GitHub (control de versiones)
+
+
+============================================================================
+3. ARQUITECTURA DEL SISTEMA
+============================================================================
+
+Diagrama de bloques:
+
+  +-------------------+    +-------------------+    +-------------------+
+  |   Public App      |    |   Admin Panel     |    |   Simulador       |
+  |  React + i18n     |    |  React + Vite     |    |  HTML plano       |
+  |  localhost:3000   |    |  localhost:5173   |    |  standalone       |
+  +--------+----------+    +--------+----------+    +--------+----------+
+           |                        |                         |
+           +------------------------+-------------------------+
+                                    | HTTP (JSON)
+                           +--------v----------+
+                           |     Backend       |
+                           |  Express 5 + R2   |
+                           |  localhost:5000   |
+                           +--------+----------+
+                                    |
+                   +----------------+----------------+
+                   |                |                |
+            +------v------+  +------v------+  +------v------+
+            |  Supabase   |  |  Groq API   |  |  R2 (CF)    |
+            | (PostgreSQL)|  | (Llama 3.3) |  | (imgs/vids) |
+            +-------------+  +-------------+  +-------------+
+
+Cada aplicación se comunica exclusivamente con el backend a través de
+HTTP (JSON). No hay comunicación directa entre las apps frontend.
+
+La Public App y el Admin Panel nunca se comunican directamente con
+Supabase (excepto el Admin Panel para login directo con el SDK de
+Supabase). Toda la lógica de negocio reside en el backend.
+
+El Simulador es un archivo HTML autónomo que escribe en localStorage
+y se comunica solo con el endpoint /api/geoip del backend.
+
+
+============================================================================
+4. ESTRUCTURA DEL PROYECTO
+============================================================================
+
+LegadoCulinario-main/
+├── backend/                          # API REST (Express 5)
+│   ├── src/
+│   │   ├── app.js                    # Configuración Express (middleware, rutas)
+│   │   ├── server.js                 # Entry point del servidor
+│   │   ├── config/
+│   │   │   └── database.js           # Cliente Supabase + testConnection()
+│   │   ├── controllers/
+│   │   │   ├── authController.js     # register, login, getMe, updateProfile, logout
+│   │   │   ├── dashboardController.js# stats del dashboard (recetas, vistas, comentarios)
+│   │   │   ├── feedbackController.js # CRUD de comentarios en recetas
+│   │   │   ├── geoipController.js    # Detección de país por IP (ipinfo.io)
+│   │   │   ├── healthController.js   # Health check (liveness, readiness)
+│   │   │   ├── provinceController.js # CRUD provincias
+│   │   │   ├── recipeController.js   # CRUD recetas + vista + mine
+│   │   │   └── regionController.js   # CRUD regiones
+│   │   ├── middlewares/
+│   │   │   ├── authMiddleware.js     # Verifica JWT de Supabase
+│   │   │   ├── errorHandler.js       # Manejo global de errores
+│   │   │   └── uploadMiddleware.js   # Multer para subida de archivos
+│   │   ├── routes/
+│   │   │   ├── aiRoutes.js           # POST /substitutes, /translate, /calories
+│   │   │   ├── authRoutes.js         # POST /login, /register, GET /me, PUT /profile
+│   │   │   ├── dashboardRoutes.js    # GET /stats
+│   │   │   ├── feedbackRoutes.js     # GET/POST feedback
+│   │   │   ├── geoipRoutes.js        # GET /
+│   │   │   ├── healthRoutes.js       # GET / (health), /live, /ready
+│   │   │   ├── provinceRoutes.js     # CRUD provincias
+│   │   │   ├── recipeRoutes.js       # CRUD recetas + /mine + /:id/view
+│   │   │   ├── regionRoutes.js       # CRUD regiones
+│   │   │   ├── uploadRoutes.js       # POST /presign
+│   │   │   └── ...                   # categoryRoutes, culturalRoutes, etc.
+│   │   └── utils/
+│   │       └── r2Helper.js           # uploadToR2, deleteFromR2, presignedUrl, etc.
+│   ├── api/
+│   │   └── index.js                  # Entry para Vercel serverless
+│   ├── public/
+│   │   ├── health.html               # Página de health dashboard
+│   │   └── favicon.svg
+│   ├── database/
+│   │   └── schema.sql                # Esquema completo de la base de datos
+│   ├── .env.example
+│   ├── vercel.json
+│   └── Dockerfile
+│
+├── public-app/                       # Catálogo de recetas (React)
+│   ├── src/
+│   │   ├── App.js                    # Componente principal (estados, sustitutos, modal)
+│   │   ├── components/
+│   │   │   ├── Navigation.js         # Menú de navegación
+│   │   │   ├── Home.js               # Página principal con mapa interactivo
+│   │   │   ├── RecipesPage.js        # Grid de recetas filtrable
+│   │   │   ├── RecipeCard.js         # Tarjeta individual de receta
+│   │   │   ├── LandingPage.js        # Página de bienvenida inicial
+│   │   │   ├── AboutPage.js          # Información del proyecto
+│   │   │   ├── SuggestionsPage.js    # Formulario de sugerencias
+│   │   │   ├── LanguageSelector.js   # Selector de idioma (es/en)
+│   │   │   ├── CountrySelector.js    # Selector de país (deprecated)
+│   │   │   ├── EcuadorMap.js         # Mapa interactivo de Ecuador
+│   │   │   ├── CustomAlert.js        # Alertas personalizadas
+│   │   │   └── styles/               # CSS de cada componente
+│   │   ├── data/
+│   │   │   ├── apiClient.js          # API_BASE_URL
+│   │   │   ├── recipesData.js        # fetchRecipes, getRecipeById, transformRecipe
+│   │   │   ├── provincesData.js      # Datos de provincias ecuatorianas
+│   │   │   └── translateService.js   # Traducción IA de recetas
+│   │   ├── i18n.js                   # Configuración de internacionalización
+│   │   ├── index.js                  # Entry point React
+│   │   └── index.css                 # Estilos globales
+│   ├── public/
+│   │   ├── index.html
+│   │   ├── images/                   # Imágenes de recetas por región
+│   │   └── manifest.json
+│   ├── .env.example
+│   ├── vercel.json
+│   └── Dockerfile
+│
+├── admin-panel/                      # Panel de administración (React + Vite)
+│   ├── src/
+│   │   ├── main.jsx                  # Entry point con React Router
+│   │   ├── App.jsx                   # Layout principal
+│   │   ├── pages/
+│   │   │   ├── Login.jsx             # Login con Supabase Auth
+│   │   │   ├── Dashboard.jsx         # Estadísticas (gráficos Chart.js)
+│   │   │   ├── RecipeList.jsx        # Listado de recetas con CRUD
+│   │   │   ├── RecipeForm.jsx        # Formulario crear/editar receta
+│   │   │   ├── FeedbackManager.jsx   # Gestión de comentarios
+│   │   │   ├── Profile.jsx           # Perfil de usuario
+│   │   │   └── Stats.jsx             # Estadísticas detalladas
+│   │   ├── components/
+│   │   │   ├── common/
+│   │   │   │   ├── ConfirmModal.jsx  # Modal de confirmación
+│   │   │   │   ├── MediaUploaders.jsx# Subida de imágenes/videos
+│   │   │   │   └── RegisterModal.jsx # Modal de registro
+│   │   │   └── layout/
+│   │   │       ├── Layout.jsx        # Layout con sidebar
+│   │   │       └── Sidebar.jsx       # Barra lateral de navegación
+│   │   ├── services/
+│   │   │   └── api.js                # Cliente HTTP con axios
+│   │   ├── utils/
+│   │   │   ├── AuthContext.jsx        # Contexto de autenticación
+│   │   │   ├── r2Uploader.js          # Subida de archivos a R2 vía proxy
+│   │   │   └── supabaseClient.js      # Cliente Supabase para login
+│   │   └── index.css
+│   ├── assets/
+│   ├── public/
+│   ├── .env.example
+│   ├── vercel.json
+│   ├── vite.config.js
+│   └── Dockerfile
+│
+├── simulador-ubicacion.html           # Herramienta standalone de simulación
+├── test-smoke.sh                      # Script de pruebas (bash + curl)
+├── docker-compose.yml                 # Orquestación Docker
+├── .gitignore
+└── README.md
+
+
+============================================================================
+5. ENDPOINTS DE LA API
+============================================================================
+
+BASE URL: http://localhost:5000/api (desarrollo)
+
+----------------------
+ENDOPOINTS PÚBLICOS (sin autenticación)
+----------------------
+
+GET  /api/health
+     Health check completo. Retorna estado del servidor, uptime,
+     conexión a Supabase y estado de R2.
+
+GET  /api/health/live
+     Liveness probe (para Docker/K8s).
+
+GET  /api/health/ready
+     Readiness probe (para Docker/K8s).
+
+GET  /api/geoip
+     Detecta el país del cliente basado en su IP.
+     Usa internamente ipinfo.io.
+     Respuesta: { success, country: "Ecuador", countryCode: "EC" }
+
+GET  /api/recipes
+     Lista recetas con paginación.
+     Parámetros opcionales: region_id, provincias_id, page, limit.
+     Respuesta: { success, data: [...], pagination: {...} }
+
+GET  /api/recipes/:id
+     Obtiene detalle completo de una receta.
+     Respuesta: { success, data: { id, name, ingredientes, ... } }
+
+POST /api/recipes/:id/view
+     Incrementa el contador de vistas de una receta.
+
+GET  /api/regions
+     Lista todas las regiones de Ecuador (Costa, Sierra, Oriente, Insular).
+
+GET  /api/provinces
+     Lista todas las provincias (opcional: ?region_id=N).
+
+GET  /api/feedback?recipe_id=N
+     Obtiene los comentarios/feedback de una receta.
+
+POST /api/ai/substitutes
+     Genera sustitutos de ingredientes usando Groq AI.
+     Body: { ingredients: ["Achiote", "Panela", ...], country: "España" }
+     Respuesta: { substitutes: ["Achiote -> Pimentón dulce", ...] }
+
+POST /api/ai/translate
+     Traduce texto de receta usando Groq AI.
+     Body: { text: "...", target_language: "en" }
+
+POST /api/ai/calories
+     Estima calorías de una receta usando Groq AI.
+     Body: { name: "Ensalada de Frutas", ingredients: "..." }
+
+POST /api/suggestions
+     Envía una sugerencia de nueva receta.
+
+----------------------
+ENDPOINTS PRIVADOS (requieren JWT)
+----------------------
+
+POST /api/auth/login
+     Inicia sesión con Supabase Auth.
+     Body: { correo: "...", password: "..." }
+     Respuesta: { success, data: { user, token, refreshToken } }
+
+POST /api/auth/register
+     Registra un nuevo usuario.
+     Body: { name, correo, password }
+
+GET  /api/auth/me
+     Obtiene datos del usuario autenticado.
+
+PUT  /api/auth/profile
+     Actualiza nombre y/o contraseña.
+
+GET  /api/recipes/mine
+     Lista recetas creadas por el usuario autenticado.
+
+POST /api/recipes
+     Crea una nueva receta (FormData con imágenes).
+
+PUT  /api/recipes/:id
+     Actualiza una receta existente.
+
+DELETE /api/recipes/:id
+     Elimina una receta.
+
+POST /api/upload/presign
+     Genera una URL prefirmada para subir archivos a R2.
+     Body: { fileName, contentType }
+     Respuesta: { url, key }
+
+GET  /api/dashboard/stats
+     Estadísticas del dashboard (recetas, vistas, comentarios).
+
+POST /api/feedback
+     Agrega un comentario a una receta (requiere auth).
+
+
+============================================================================
+6. BASE DE DATOS (SUPABASE / POSTGRESQL)
+============================================================================
+
+Plataforma: Supabase (PostgreSQL gestionado)
+SDK: @supabase/supabase-js con service_role_key para operaciones del backend
+
+ESQUEMA PRINCIPAL (database/schema.sql):
+
+Tabla: public.users
+  - id UUID PRIMARY KEY (vinculado a auth.users de Supabase Auth)
+  - name VARCHAR(255)
+  - correo VARCHAR(255) UNIQUE
+  - role VARCHAR(50) DEFAULT 'admin'
+  - created_at / updated_at TIMESTAMPTZ
+
+Tabla: public.regiones
+  - id SERIAL PRIMARY KEY
+  - name_regiones VARCHAR(100)
+  - descripcion TEXT
+  - created_at TIMESTAMPTZ
+
+Tabla: public.provincias
+  - id SERIAL PRIMARY KEY
+  - region_id INTEGER REFERENCES regiones(id)
+  - name_provincias VARCHAR(100)
+  - created_at TIMESTAMPTZ
+
+Tabla: public.recetas (recipes)
+  - id SERIAL PRIMARY KEY
+  - name VARCHAR(255)
+  - ingredientes TEXT (separado por saltos de línea)
+  - instrucciones TEXT
+  - region_id INTEGER REFERENCES regiones(id)
+  - provincias_id INTEGER REFERENCES provincias(id)
+  - url_foto TEXT (URL pública de R2)
+  - public_id TEXT (key de R2)
+  - url_video TEXT
+  - video_public_id TEXT
+  - tiempo_preparacion INTEGER
+  - porciones INTEGER
+  - como_servir TEXT
+  - description TEXT
+  - calorias INTEGER
+  - vistas INTEGER DEFAULT 0
+  - created_by UUID REFERENCES users(id)
+  - created_at / updated_at TIMESTAMPTZ
+  - imagenes JSONB DEFAULT '[]' (array de objetos {key, url})
+
+Tabla: public.feedback
+  - id SERIAL PRIMARY KEY
+  - recipe_id INTEGER REFERENCES recetas(id)
+  - name VARCHAR(255)
+  - email VARCHAR(255)
+  - rating INTEGER
+  - comment TEXT
+  - created_at TIMESTAMPTZ
+
+Tabla: public.sugerencias (suggestions)
+  - id SERIAL PRIMARY KEY
+  - nombre_receta VARCHAR(255)
+  - ingredientes TEXT
+  - instrucciones TEXT
+  - nombre_persona VARCHAR(255)
+  - correo VARCHAR(255)
+  - created_at TIMESTAMPTZ
+
+
+============================================================================
+7. SISTEMA DE SUSTITUCIÓN DE INGREDIENTES (IA)
+============================================================================
+
+Este es el núcleo diferenciador de la aplicación. Permite a usuarios
+internacionales adaptar recetas ecuatorianas a los ingredientes disponibles
+en su país.
+
+FLUJO COMPLETO:
+
+1. El usuario puede estar en modo simulación o modo real:
+   - Modo simulación: el país se lee de localStorage (seteado por el
+     simulador HTML o por URL params ?country=...&sim=true)
+   - Modo real: el backend detecta el país mediante ipinfo.io (endpoint
+     /api/geoip)
+
+2. Cuando el usuario abre una receta, el frontend llama a:
+
+     POST /api/ai/substitutes
+     Body: { ingredients: [...], country: "España" }
+
+3. El backend construye un prompt para Groq API (Llama 3.3 70B) con el
+   país interpolado:
+
+     "Eres un chef experto en gastronomía ecuatoriana e internacional...
+      Analiza CADA ingrediente de la lista...
+      Si un ingrediente es específico de Ecuador o difícil de hallar
+      en ${country}, sugiere el MEJOR sustituto local disponible..."
+
+4. Groq responde con líneas en formato "Original -> Sustituto".
+   El backend parsea la respuesta y devuelve un array.
+
+5. El frontend renderiza cada sustituto en una tarjeta con dos caras:
+   ingrediente original y sustituto sugerido.
+
+PROMPT COMPLETO (aiRoutes.js):
+
+  Eres un chef experto en gastronomía ecuatoriana e internacional.
+  Tienes una lista de ingredientes originales de una receta ecuatoriana.
+  Tu tarea es identificar cuáles de estos ingredientes son difíciles de
+  conseguir o no existen en [país].
+
+  Lista de ingredientes: [achiote, panela, chifles, ...]
+
+  Instrucciones:
+  1. Analiza CADA ingrediente de la lista.
+  2. Si es común y fácil de encontrar en [país], IGNÓRALO.
+  3. Si es específico de Ecuador o difícil de hallar, sugiere el MEJOR
+     sustituto local disponible en [país].
+  4. Responde ÚNICAMENTE con el formato: "Original -> Sustituto".
+  5. Si todos son fáciles de conseguir, responde "Ninguno".
+
+CONFIGURACIÓN DE GROQ:
+  - Modelo: llama-3.3-70b-versatile
+  - Temperatura: 0.3 (baja para respuestas consistentes)
+  - Max tokens: 500
+
+PAÍSES SOPORTADOS (en el simulador):
+  Estados Unidos, Canadá, Reino Unido, España, Francia, Alemania,
+  Italia, China, Japón, México, Argentina, Colombia, Ecuador, Australia
+
+
+============================================================================
+8. SIMULADOR DE UBICACIÓN
+============================================================================
+
+Archivo: simulador-ubicacion.html (standalone, sin framework)
+
+FUNCIONALIDAD:
+  - Interfaz con toggle ON/OFF para activar/desactivar simulación
+  - Botón "Detectar real" que obtiene la ubicación real por IP
+    (llama a http://localhost:5000/api/geoip)
+  - Botones por país agrupados por región
+  - Al hacer click en un país, habilita la simulación y actualiza el
+    enlace "Abrir app pública con este país"
+
+CÓMO SE COMUNICA CON LA APP PÚBLICA:
+  - No usa localStorage directo (orígenes distintos: file:// vs http://)
+  - Usa URL parameters: abre la app pública con
+    http://localhost:3000?country=Reino%20Unido&sim=true
+  - La app pública lee los params en un useEffect al montar,
+    los guarda en localStorage y actualiza el estado
+
+API KEY: ipinfo.io (gratuito, hasta 50k requests/mes sin API key)
+
+
+============================================================================
+9. ALMACENAMIENTO (CLOUDFLARE R2)
+============================================================================
+
+Se migró de Cloudinary a Cloudflare R2 para eliminar costos de egress.
+
+ARQUITECTURA:
+  - Backend: r2Helper.js (S3 SDK) con funciones:
+      uploadToR2(buffer, key, contentType) -> URL pública
+      deleteFromR2(key) -> void
+      uploadMultipleToR2(files) -> URLs[]
+      deleteMultipleToR2(keys) -> void
+      generatePresignedUrl(key, expiresIn) -> URL firmada
+  - Backend: uploadRoutes.js -> POST /api/upload/presign
+  - Frontend Admin: r2Uploader.js -> sube archivos al backend
+    (FormData -> multer -> r2Helper.uploadToR2)
+
+FLUJO DE SUBIDA:
+  1. Admin selecciona archivo en RecipeForm.jsx
+  2. r2Uploader.js envía FormData a POST /api/upload (backend proxy)
+  3. Multer recibe el archivo en el backend
+  4. r2Helper.uploadToR2() lo sube a R2
+  5. Se devuelve la URL pública
+
+CONFIGURACIÓN (en backend/.env):
+  R2_ENDPOINT=...
+  R2_ACCESS_KEY_ID=...
+  R2_SECRET_ACCESS_KEY=...
+  R2_BUCKET=legadoculinario
+  R2_PUBLIC_URL=https://pub-....r2.dev
+
+BENEFICIOS DE R2 SOBRE CLOUDINARY:
+  - Sin costos de egress (transferencia de salida gratuita)
+  - Sin límite de visualizaciones (no hay "credits" por vista)
+  - API compatible con S3 SDK
+  - URLs públicas directas sin necesidad de firmas
+
+
+============================================================================
+10. AUTENTICACIÓN
+============================================================================
+
+SISTEMA: Supabase Auth (JWT)
+
+Backend:
+  - authMiddleware.js verifica el token JWT en el header
+    Authorization: Bearer <token>
+  - Extrae el user_id del token y lo inyecta en req.user
+  - Los endpoints privados usan este middleware
+
+Admin Panel:
+  - Usa @supabase/supabase-js directamente para login
+  - AuthContext.jsx maneja el estado de autenticación
+  - El token se persiste en localStorage
+  - Se envía automáticamente en cada petición axios via interceptor
+
+Public App:
+  - No requiere autenticación (es pública)
+  - No hay login para usuarios visitantes
+
+FLUJO DE LOGIN:
+  1. Admin ingresa correo y contraseña en Login.jsx
+  2. Supabase Auth valida las credenciales
+  3. Se obtiene un JWT (access_token)
+  4. El JWT se usa en todas las peticiones al backend
+  5. authMiddleware decodifica el JWT y verifica que sea válido
+
+
+============================================================================
+11. INTERNACIONALIZACIÓN (I18N)
+============================================================================
+
+SISTEMA: i18next + react-i18next + i18next-browser-languagedetector
+
+IDIOMAS SOPORTADOS:
+  - Español (es) - por defecto
+  - Inglés (en)
+
+DETECCIÓN DE IDIOMA:
+  - Automática: navigator.language del navegador
+  - Manual: LanguageSelector component
+  - Persistente: se guarda en localStorage
+
+TRADUCCIÓN ADICIONAL:
+  - Además de las traducciones estáticas, la app pública puede traducir
+    dinámicamente el contenido de las recetas (nombre, ingredientes,
+    instrucciones) usando Groq AI (POST /api/ai/translate)
+
+ESTRUCTURA:
+  - src/i18n.js: recursos de traducción y configuración
+  - Cada componente usa useTranslation() de react-i18next
+  - Las claves están organizadas por contexto: common, nav, home, etc.
+
+
+============================================================================
+12. DESPLIEGUE
+============================================================================
+
+A. DESPLIEGUE LOCAL (desarrollo)
+   Ver README.md - sección "Instalación y Ejecución Local"
+
+B. DOCKER
+   docker compose up -d
+   Expone: backend:5001, public-app:3001, admin-panel:5173
+
+C. VERCEL (cada app se despliega por separado)
+
+   BACKEND en Vercel:
+     - cd backend && vercel --prod
+     - Entry: api/index.js
+     - Config: vercel.json
+     - Variables de entorno en proyecto Vercel
+
+   PUBLIC APP en Vercel:
+     - cd public-app && vercel --prod
+     - Configurar REACT_APP_API_URL apuntando al backend en producción
+
+   ADMIN PANEL en Vercel:
+     - cd admin-panel && vercel --prod
+     - Configurar VITE_API_URL, VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY
+
+
+============================================================================
+13. VARIABLES DE ENTORNO
+============================================================================
+
+BACKEND (.env):
+
+  Variable                    Descripción
+  --------------------------  --------------------------------------------
+  NODE_ENV                    development | production
+  PORT                        Puerto del servidor (5000)
+  SUPABASE_URL                URL del proyecto Supabase
+  SUPABASE_ANON_KEY           API key anónima de Supabase (pública)
+  SUPABASE_SERVICE_ROLE_KEY   Service role key de Supabase (privada)
+  CORS_ORIGIN                 Orígenes permitidos (separados por coma)
+  R2_ENDPOINT                 Endpoint S3 de Cloudflare R2
+  R2_ACCESS_KEY_ID            Access key de R2
+  R2_SECRET_ACCESS_KEY        Secret key de R2
+  R2_BUCKET                   Nombre del bucket R2
+  R2_PUBLIC_URL               URL pública del bucket R2
+  EMAIL_HOST                  Servidor SMTP
+  EMAIL_PORT                  Puerto SMTP
+  EMAIL_USER                  Usuario SMTP
+  EMAIL_PASS                  Contraseña SMTP
+  GROQ_API_KEY                API key de Groq para IA
+
+PUBLIC APP (.env):
+
+  Variable                    Descripción
+  --------------------------  --------------------------------------------
+  REACT_APP_API_URL           URL base del backend (ej: http://localhost:5000/api)
+
+ADMIN PANEL (.env):
+
+  Variable                    Descripción
+  --------------------------  --------------------------------------------
+  VITE_API_URL                URL base del backend
+  VITE_SUPABASE_URL           URL del proyecto Supabase
+  VITE_SUPABASE_ANON_KEY      API key anónima de Supabase
+
+
+============================================================================
+14. FLUJO DE DATOS - CASO DE USO PRINCIPAL
+============================================================================
+
+ESCENARIO: Un usuario en España abre una receta ecuatoriana.
+
+  1. USUARIO abre el simulador-ubicacion.html
+  2. SELECCIONA "España" en la interfaz
+  3. HACE CLICK en "Abrir app pública con este país"
+  4. SE ABRE http://localhost:3000?country=España&sim=true
+
+  5. PUBLIC APP al montar:
+     a. Lee ?country=España de la URL
+     b. Guarda en localStorage: simulatedCountry = "España"
+     c. simulationEnabled = true (default)
+     d. activeCountry = "España" (simulado)
+
+  6. USUARIO navega y hace click en una receta (ej. "Ensalada de Frutas")
+
+  7. PUBLIC APP:
+     a. fetch(`${API}/recipes/24`) -> obtiene datos completos
+     b. transformRecipe() convierte ingredientes(string) a ingredients[]
+     c. selectedRecipe = { ..., ingredientes: "Frutas...", ingredients: [...] }
+     d. useEffect detecta que selectedRecipe cambió
+
+  8. PUBLIC APP -> POST /api/ai/substitutes
+     Body: {
+       ingredients: ["Frutas frescas", "Cebolla", "Ajo", ...],
+       country: "España"
+     }
+
+  9. BACKEND (aiRoutes.js):
+     a. Recibe ingredientes + país
+     b. Construye prompt con país interpolado
+     c. Llama a Groq API (Llama 3.3 70B)
+     d. Parsea respuesta: "Cilantro fresco -> Perejil fresco"
+     e. Devuelve: { substitutes: ["Cilantro fresco -> Perejil fresco", ...] }
+
+  10. PUBLIC APP: renderiza tarjetas de sustituto
+      ┌──────────────────┐   ┌──────────────────┐
+      │ Cilantro fresco  │   │ Frutas frescas   │
+      │       ➔          │   │       ➔          │
+      │ Perejil fresco   │   │ (disponible)     │
+      └──────────────────┘   └──────────────────┘
+
+  11. USUARIO ve qué ingredientes cambiar y por cuáles.
+
+
+============================================================================
+FIN DE LA DOCUMENTACIÓN
+============================================================================
