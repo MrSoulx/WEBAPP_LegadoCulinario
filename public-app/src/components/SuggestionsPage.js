@@ -127,6 +127,17 @@ function SuggestionsPage() {
 
         {/* Formulario de envío de recetas */}
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          {/* Honeypot (invisible para humanos) */}
+          <div style={{ position: 'absolute', left: '-9999px', opacity: 0 }} aria-hidden="true">
+            <label>No llenar</label>
+            <input
+              type="text"
+              tabIndex={-1}
+              autoComplete="off"
+              value={formData._hp || ''}
+              onChange={(e) => setFormData({...formData, _hp: e.target.value})}
+            />
+          </div>
           {/* Campo Nombre de la Receta */}
           <div>
             <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>
