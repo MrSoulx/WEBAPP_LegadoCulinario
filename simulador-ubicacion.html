@@ -153,7 +153,7 @@
     <p class="subtitle">
       Para <strong>Legado Culinario</strong> &mdash;
       Cambiá el país y los sustitutos de ingredientes se adaptan automáticamente en la app pública.
-      <br><a class="open-app-btn" id="openAppLink" href="http://localhost:3000" target="_blank">🚀 Abrir app pública con este país</a>
+      <br><a class="open-app-btn" id="openAppLink" href="https://legadoculinario.mrsoulx.xyz" target="_blank">🚀 Abrir app pública con este país</a>
     </p>
 
     <div class="card">
@@ -236,7 +236,7 @@
         country: simulatedCountry,
         sim: simulationEnabled ? 'true' : 'false'
       });
-      openAppLink.href = 'http://localhost:3000?' + params.toString();
+      openAppLink.href = 'https://legadoculinario.mrsoulx.xyz/?' + params.toString();
     }
 
     function showToast(msg) {
@@ -328,7 +328,7 @@
       detectBtn.disabled = true;
       detectBtn.textContent = '🔄 Detectando...';
       try {
-        const res = await fetch('http://localhost:5000/api/geoip');
+        const res = await fetch('https://api.legadoculinario.mrsoulx.xyz/api/geoip');
         if (!res.ok) throw new Error('HTTP ' + res.status);
         const data = await res.json();
         if (data.success && data.country) {
