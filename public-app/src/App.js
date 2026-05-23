@@ -92,9 +92,11 @@ function App() {
       window.removeEventListener('storage', syncFromStorage);
     };
   }, [userCountry]);
+
+  // Detectar ubicación real cuando la simulación está desactivada
   useEffect(() => {
     if (!simulationEnabled && !realCountry) {
-      fetch('http://localhost:5000/api/geoip')
+      fetch(`${API_BASE_URL}/geoip`)
         .then(res => res.json())
         .then(data => {
           if (data.success && data.country) {
@@ -104,22 +106,8 @@ function App() {
         })
         .catch(err => console.error('Error detectando ubicación:', err));
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [simulationEnabled]);
-
-  const handleCountryChange = (country) => {
-    localStorage.setItem('simulatedCountry', country);
-    setUserCountry(country);
-  };
-
-  const handleToggleSimulation = (enabled) => {
-    setSimulationEnabled(enabled);
-    if (enabled) {
-      const saved = localStorage.getItem('simulatedCountry') || 'Estados Unidos';
-      setUserCountry(saved);
-    } else if (realCountry) {
-      setUserCountry(realCountry);
-    }
-  };
 
   // País activo (simulado o real) - refresca desde localStorage en cada render
   const activeCountry = (simulationEnabled ? localStorage.getItem('simulatedCountry') || userCountry : (realCountry || userCountry));
@@ -159,6 +147,7 @@ function App() {
 
   // Traducción IA del contenido de la receta
   const [translatedRecipe, setTranslatedRecipe] = useState(null);
+  // eslint-disable-next-line no-unused-vars
   const [isTranslating, setIsTranslating] = useState(false);
   const { i18n: i18n_instance } = useTranslation();
 
