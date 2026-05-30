@@ -6,7 +6,7 @@ import { toast } from 'react-hot-toast';
 import { ImageUploader, VideoUploader } from '../components/common/MediaUploaders';
 import './RecipeForm.css';
 
-import { buildFormData, uploadVideoDirect, uploadImagesDirect } from '../utils/r2Uploader';
+import { uploadVideoDirect, uploadImagesDirect } from '../utils/r2Uploader';
 import api from '../services/api';
 
 const RecipeForm = () => {
@@ -219,8 +219,8 @@ const RecipeForm = () => {
         }
       }
 
-      // El FormData solo lleva campos de texto (los archivos ya están en R2)
-      const submitData = {
+      // Los archivos ya están en R2, enviamos solo JSON (sin multer, sin 413)
+      const payload = {
         name: formData.name,
         ingredientes: formData.ingredientes,
         instrucciones: formData.instrucciones,
@@ -237,15 +237,13 @@ const RecipeForm = () => {
         ...(imagenesDirect && { imagenes_direct: JSON.stringify(imagenesDirect) }),
       };
 
-      const formDataPayload = buildFormData(submitData, [], videoDirectUrl ? null : video);
-
       setUploadProgress(60);
 
       if (id) {
-        await recipesAPI.update(id, formDataPayload);
+        await recipesAPI.update(id, payload);
         toast.success('Receta actualizada correctamente');
       } else {
-        await recipesAPI.create(formDataPayload);
+        await recipesAPI.create(payload);
         toast.success('Receta publicada exitosamente');
       }
 
