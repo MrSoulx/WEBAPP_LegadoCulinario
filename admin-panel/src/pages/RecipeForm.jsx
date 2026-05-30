@@ -6,7 +6,7 @@ import { toast } from 'react-hot-toast';
 import { ImageUploader, VideoUploader } from '../components/common/MediaUploaders';
 import './RecipeForm.css';
 
-import { buildFormData } from '../utils/r2Uploader';
+import { buildFormData, uploadVideoDirect, uploadImagesDirect } from '../utils/r2Uploader';
 import api from '../services/api';
 
 const RecipeForm = () => {
@@ -179,7 +179,47 @@ const RecipeForm = () => {
     try {
       setUploadProgress(30);
 
-      // Construir FormData con archivos + datos
+      // Subir archivos directamente a R2 (evita límite 4.5MB de Vercel)
+      let videoDirectUrl = null;
+      let videoDirectKey = null;
+      let imagenesDirect = null;
+      let urlFotoDirect = null;
+      let publicIdDirect = null;
+
+      if (video) {
+        try {
+          setUploadProgress(35);
+          const result = await uploadVideoDirect(video);
+          videoDirectUrl = result.url;
+          videoDirectKey = result.key;
+          setUploadProgress(45);
+        } catch (uploadError) {
+          console.error('Error subiendo video:', uploadError);
+          toast.error('Error al subir el video. Verifique conexión o tamaño del archivo.');
+          setLoading(false);
+          setUploadProgress(0);
+          return;
+        }
+      }
+
+      if (images.length > 0) {
+        try {
+          setUploadProgress(50);
+          const results = await uploadImagesDirect(images);
+          imagenesDirect = results;
+          urlFotoDirect = results[0].url;
+          publicIdDirect = results[0].key;
+          setUploadProgress(65);
+        } catch (uploadError) {
+          console.error('Error subiendo imágenes:', uploadError);
+          toast.error('Error al subir imágenes. Verifique conexión o tamaño.');
+          setLoading(false);
+          setUploadProgress(0);
+          return;
+        }
+      }
+
+      // El FormData solo lleva campos de texto (los archivos ya están en R2)
       const submitData = {
         name: formData.name,
         ingredientes: formData.ingredientes,
@@ -190,9 +230,14 @@ const RecipeForm = () => {
         porciones: formData.porciones,
         como_servir: formData.como_servir,
         calorias: formData.calorias ? parseInt(formData.calorias, 10) : '',
+        ...(videoDirectUrl && { url_video_direct: videoDirectUrl }),
+        ...(videoDirectKey && { video_public_id_direct: videoDirectKey }),
+        ...(urlFotoDirect && { url_foto_direct: urlFotoDirect }),
+        ...(publicIdDirect && { public_id_direct: publicIdDirect }),
+        ...(imagenesDirect && { imagenes_direct: JSON.stringify(imagenesDirect) }),
       };
 
-      const formDataPayload = buildFormData(submitData, images, video);
+      const formDataPayload = buildFormData(submitData, [], videoDirectUrl ? null : video);
 
       setUploadProgress(60);
 

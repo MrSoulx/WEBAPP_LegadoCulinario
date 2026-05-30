@@ -34,8 +34,23 @@ app.use(helmet({
   frameguard: false, // Permitir iframes (necesario para el visor de Cloudinary local)
 }));
 
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://localhost:3001',
+  'http://localhost:5173',
+  'https://admin.legadoculinario.mrsoulx.xyz',
+  'https://legadoculinario.mrsoulx.xyz',
+  'https://backend-teal-six-29.vercel.app',
+];
+
 const corsOptions = {
-  origin: true, // Permitir cualquier origen dinámicamente (Seguro con credentials: true bajo HTTPS)
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(null, true);
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Cache-Control', 'X-Api-Version'],
@@ -43,6 +58,7 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 
 // Middlewares de parseo (Aumentado para soportar metadatos en subidas grandes)
 app.use(express.json({ limit: '50mb' })); // Reducido de 1GB a algo razonable para Vercel

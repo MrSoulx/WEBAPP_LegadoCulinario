@@ -256,6 +256,16 @@ exports.updateRecipe = async (req, res) => {
     if (video_public_id_direct) updateData.video_public_id = video_public_id_direct;
     if (imagenes_direct) updateData.imagenes = typeof imagenes_direct === 'string' ? JSON.parse(imagenes_direct) : imagenes_direct;
 
+    // Eliminar archivos antiguos de R2 si se subieron nuevos directamente
+    if (url_foto_direct && recetaActual.public_id) {
+      console.log(`🗑️ Eliminando imagen anterior de R2: ${recetaActual.public_id}`);
+      await deleteFromR2(recetaActual.public_id);
+    }
+    if (url_video_direct && recetaActual.video_public_id) {
+      console.log(`🗑️ Eliminando video anterior de R2: ${recetaActual.video_public_id}`);
+      await deleteFromR2(recetaActual.video_public_id);
+    }
+
     // Procesar archivos si existen
     if (req.files) {
       // Si hay nuevas imágenes
